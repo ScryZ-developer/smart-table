@@ -52,8 +52,25 @@ const sampleTable = initTable({
     after: []
 }, render);
 
-// @todo: инициализация
-
+// @todo: инициализацияconst applySearching = initSearching('search');
+const applyFiltering = initFiltering(sampleTable.filter.elements, {
+    searchBySeller: indexes.sellers
+});
+const applySorting = initSorting([
+    sampleTable.header.elements.sortByDate,
+    sampleTable.header.elements.sortByTotal
+]);
+const applyPagination = initPagination(
+    sampleTable.pagination.elements,
+    (el, page, isCurrent) => {
+        const input = el.querySelector('input');
+        const label = el.querySelector('span');
+        input.value = page;
+        input.checked = isCurrent;
+        label.textContent = page;
+        return el;
+    }
+);
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
