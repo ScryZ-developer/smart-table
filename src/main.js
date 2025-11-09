@@ -13,7 +13,6 @@ import {initFiltering} from "./components/filtering.js";
 import {initSorting} from "./components/sorting.js";
 import {initPagination} from "./components/pagination.js";
 
-
 // Исходные данные используемые в render()
 const {data, ...indexes} = initData(sourceData);
 
@@ -23,9 +22,14 @@ const {data, ...indexes} = initData(sourceData);
  */
 function collectState() {
     const state = processFormData(new FormData(sampleTable.container));
-
+    
+    const rowsPerPage = parseInt(state.rowsPerPage);
+    const page = parseInt(state.page ?? 1);
+    
     return {
-        ...state
+        ...state,
+        rowsPerPage,
+        page
     };
 }
 
@@ -48,11 +52,12 @@ function render(action) {
 const sampleTable = initTable({
     tableTemplate: 'table',
     rowTemplate: 'row',
-    before: [],
-    after: []
+    before: ['search', 'header', 'filter'],
+    after: ['pagination']
 }, render);
 
-// @todo: инициализацияconst applySearching = initSearching('search');
+// @todo: инициализация
+const applySearching = initSearching('search');
 const applyFiltering = initFiltering(sampleTable.filter.elements, {
     searchBySeller: indexes.sellers
 });
