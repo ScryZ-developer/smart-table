@@ -8,6 +8,10 @@ import {processFormData} from "./lib/utils.js";
 
 import {initTable} from "./components/table.js";
 // @todo: подключение
+import {initSearching} from "./components/searching.js";
+import {initFiltering} from "./components/filtering.js";
+import {initSorting} from "./components/sorting.js";
+import {initPagination} from "./components/pagination.js";
 
 
 // Исходные данные используемые в render()
