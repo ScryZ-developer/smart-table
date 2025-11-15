@@ -1,3 +1,5 @@
+import {makeIndex} from "./lib/utils.js";
+
 export function initData(sourceData) {
     const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
     
@@ -23,6 +25,10 @@ export function initData(sourceData) {
                 fetch(`${BASE_URL}/sellers`).then(res => res.json()),
                 fetch(`${BASE_URL}/customers`).then(res => res.json()),
             ]);
+            
+            // Преобразуем в нужный формат для совместимости
+            sellers = makeIndex(sellers, 'id', v => `${v.first_name} ${v.last_name}`);
+            customers = makeIndex(customers, 'id', v => `${v.first_name} ${v.last_name}`);
         }
 
         return { sellers, customers };
