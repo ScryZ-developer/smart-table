@@ -1,17 +1,22 @@
 export function initFiltering(elements) {
     const updateIndexes = (elements, indexes) => {
         Object.keys(indexes).forEach((elementName) => {
-            elements[elementName].append(...Object.values(indexes[elementName]).map(name => {
-                const el = document.createElement('option');
-                el.textContent = name;
-                el.value = name;
-                return el;
-            }))
-        })
+            // Очищаем существующие опции кроме первой
+            while (elements[elementName].children.length > 1) {
+                elements[elementName].removeChild(elements[elementName].lastChild);
+            }
+            
+            // Добавляем новые опции
+            Object.values(indexes[elementName]).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                elements[elementName].appendChild(option);
+            });
+        });
     }
 
     const applyFiltering = (query, state, action) => {
-        // Обработка очистки поля
         if (action && action.name === 'clear') {
             const field = action.dataset.field;
             const parent = action.closest('.field');
@@ -22,13 +27,10 @@ export function initFiltering(elements) {
             }
         }
 
-        // Формирование параметров фильтрации для сервера
         const filter = {};
         Object.keys(elements).forEach(key => {
-            if (elements[key]) {
-                if (['INPUT', 'SELECT'].includes(elements[key].tagName) && elements[key].value) {
-                    filter[`filter[${elements[key].name}]`] = elements[key].value;
-                }
+            if (elements[key] && elements[key].value) {
+                filter[`filter[${elements[key].name}]`] = elements[key].value;
             }
         });
 

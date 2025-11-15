@@ -10,14 +10,12 @@ export function initSorting(columns) {
             field = action.dataset.field;
             order = action.dataset.value;
 
-            // Сбросить сортировки остальных колонок
             columns.forEach(column => {
                 if (column.dataset.field !== action.dataset.field) {
                     column.dataset.value = 'none';
                 }
             });
         } else {
-            // Получить выбранный режим сортировки
             columns.forEach(column => {
                 if (column.dataset.value !== 'none') {
                     field = column.dataset.field;
