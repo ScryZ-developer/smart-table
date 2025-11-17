@@ -1,78 +1,76 @@
 export function initData(sourceData) {
     const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
     
-    let sellers;
-    let customers;
-    let lastResult;
-    let lastQuery;
+    let sellersMap = {};
+    let customersMap = {};
 
     const getIndexes = async () => {
-        if (!sellers || !customers) {
+        try {
             const [sellersResponse, customersResponse] = await Promise.all([
                 fetch(`${BASE_URL}/sellers`).then(res => res.json()),
                 fetch(`${BASE_URL}/customers`).then(res => res.json()),
             ]);
 
-            sellers = {};
-            customers = {};
+            sellersMap = {};
+            customersMap = {};
 
-            // Создаем две мапы: для строковых и числовых ключей
             if (sellersResponse && typeof sellersResponse === 'object') {
-                Object.entries(sellersResponse).forEach(([key, sellerData]) => {
-                    if (sellerData && typeof sellerData === 'string') {
-                        // Сохраняем для строкового ключа "seller_1"
-                        sellers[key] = sellerData;
-                        // Сохраняем для числового ключа 1
+                Object.entries(sellersResponse).forEach(([key, name]) => {
+                    if (typeof name === 'string') {
                         const numericId = parseInt(key.replace('seller_', ''));
-                        sellers[numericId] = sellerData;
+                        sellersMap[numericId] = name;
+                        sellersMap[key] = name;
                     }
                 });
             }
 
             if (customersResponse && typeof customersResponse === 'object') {
-                Object.entries(customersResponse).forEach(([key, customerData]) => {
-                    if (customerData && typeof customerData === 'string') {
-                        // Сохраняем для строкового ключа "customer_1"
-                        customers[key] = customerData;
-                        // Сохраняем для числового ключа 1
+                Object.entries(customersResponse).forEach(([key, name]) => {
+                    if (typeof name === 'string') {
                         const numericId = parseInt(key.replace('customer_', ''));
-                        customers[numericId] = customerData;
+                        customersMap[numericId] = name;
+                        customersMap[key] = name;
                     }
                 });
             }
+
+        } catch (error) {
+            sellersMap = {};
+            customersMap = {};
         }
 
-        return { sellers, customers };
+        return { sellers: sellersMap, customers: customersMap };
     }
 
     const getRecords = async (query, isUpdated = false) => {
-        await getIndexes();
+        try {
+            const { sellers, customers } = await getIndexes();
+            
+            const qs = new URLSearchParams(query);
+            const response = await fetch(`${BASE_URL}/records?${qs.toString()}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const records = await response.json();
 
-        const qs = new URLSearchParams(query);
-        const nextQuery = qs.toString();
+            // Безопасное преобразование записей
+            const items = Array.isArray(records?.items) ? records.items.map(item => ({
+                id: item.receipt_id || item.id || '',
+                date: item.date || '',
+                seller: sellers[item.seller_id] || `Seller ${item.seller_id}`,
+                customer: customers[item.customer_id] || `Customer ${item.customer_id}`,
+                total: item.total_amount || 0
+            })) : [];
 
-        if (lastQuery === nextQuery && !isUpdated) {
-            return lastResult;
+            return {
+                total: records?.total || 0,
+                items: items
+            };
+        } catch (error) {
+            return { total: 0, items: [] };
         }
-
-        const response = await fetch(`${BASE_URL}/records?${nextQuery}`);
-        const records = await response.json();
-
-        const mapRecords = (data) => data.map(item => ({
-            id: item.receipt_id,
-            date: item.date,
-            seller: sellers[item.seller_id] || `Seller ${item.seller_id}`,
-            customer: customers[item.customer_id] || `Customer ${item.customer_id}`,
-            total: item.total_amount
-        }));
-
-        lastQuery = nextQuery;
-        lastResult = {
-            total: records.total,
-            items: mapRecords(records.items)
-        };
-
-        return lastResult;
     };
 
     return {

@@ -1,36 +1,50 @@
 export function initFiltering(elements) {
     const updateIndexes = (elements, indexes) => {
-        Object.keys(indexes).forEach(elementName => {
-            elements[elementName].append(
-                ...Object.values(indexes[elementName]).map(name => {
+        Object.keys(indexes).forEach((elementName) => {
+            if (elements[elementName] && indexes[elementName]) {
+                const select = elements[elementName];
+                
+                const firstOption = select.children[0];
+                
+                while (select.children.length > 1) {
+                    select.removeChild(select.lastChild);
+                }
+                
+                const uniqueValues = [...new Set(Object.values(indexes[elementName]))];
+                uniqueValues.sort().forEach(name => {
                     const option = document.createElement('option');
                     option.value = name;
                     option.textContent = name;
-                    return option;
-                })
-            );
+                    select.appendChild(option);
+                });
+            }
         });
     }
 
     const applyFiltering = (query, state, action) => {
-        // @todo: #4.2 — обработать очистку поля
         if (action && action.name === 'clear') {
             const field = action.dataset.field;
-            const parent = action.closest('.field');
-            const input = parent.querySelector('input');
-            if (input) {
-                input.value = '';
+            
+            // Создаем mapping между dataset.field и data-name
+            const fieldMapping = {
+                'date': 'searchByDate',
+                'customer': 'searchByCustomer', 
+                'seller': 'searchBySeller',
+                'total': 'totalFrom' // или totalTo, нужно уточнить
+            };
+            
+            const elementName = fieldMapping[field];
+            if (elementName && elements[elementName]) {
+                elements[elementName].value = '';
                 state[field] = '';
             }
         }
 
-        // @todo: #4.5 — отфильтровать данные используя компаратор
         const filter = {};
         Object.keys(elements).forEach(key => {
-            if (elements[key]) {
-                if (['INPUT', 'SELECT'].includes(elements[key].tagName) && elements[key].value) {
-                    filter[`filter[${elements[key].name}]`] = elements[key].value;
-                }
+            if (elements[key] && elements[key].value) {
+                const fieldName = elements[key].name;
+                filter[`filter[${fieldName}]`] = elements[key].value;
             }
         });
 
